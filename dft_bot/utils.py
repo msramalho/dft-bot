@@ -17,7 +17,7 @@ class ToolResponse:
     text: str = ""
     input: str = ""  # user input field, eg: email, phone, ...
     filename: str = None
-    error: str = None
+    # error: str = None
     start_time: float = field(default_factory=time.time)
 
     async def send_telegram(self, client: TelegramClient, sender_id: str):

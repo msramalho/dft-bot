@@ -1,11 +1,14 @@
 from typing import *
 
 import tempfile, subprocess, json, traceback
-from dft_bot.callers.caller import Caller
+from dft_bot.callers.caller import BotType, Caller
 from dft_bot.constants import TMP_DIR
 from dft_bot.utils import ToolResponse
 
 class GHuntCaller(Caller):
+    name = "GHunt"
+    url = "https://github.com/mxrch/GHunt"
+
     async def call(self) -> ToolResponse:
         print("START GHUNT CALL")
         email = self.input.get("email")
@@ -49,5 +52,5 @@ class GHuntCaller(Caller):
                 res.text = "\n".join(data_points)
         except Exception as e:
             print(f"An error occurred: {str(e)}: {traceback.format_exc()}")
-            res.error = "An error occurred"
+            res.text = "An error occurred (possibly no google account associated)"
         return res

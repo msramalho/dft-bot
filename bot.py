@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 import datetime
 from dft_bot.callers.caller import BotType
+from dft_bot.constants import TMP_DIR
 from dft_bot.db.crud import init_db, insert_active_user, is_user_active
 from dft_bot.db.models import UserTypeEnum
 from dft_bot.security import valid_login
@@ -24,12 +25,15 @@ client = TelegramClient("./secrets/anon", API_ID, API_HASH).start(bot_token=BOT_
 async def start(event):
     sender = await event.get_sender()
     sender_id = sender.id
-    text = "Docker Bot 🤖 ready\nHello! I'm answering you from Docker!"
-    await client.send_message(sender_id, text, parse_mode="HTML")
-
-    markup = client.build_reply_markup(Button.text('/time', single_use=True))
-    await client.send_message(sender_id, "Click it", buttons=markup)
-
+    text = "Welcome to the digital footprint tracking bot 🤖!\n"
+    type_callers = {
+        "email": [HoleheCaller, GHuntCaller, AlephCaller],
+    }
+    for c in type_callers:
+        text += f"\n<b>{c}</b> tools:"
+        for caller in type_callers[c]:
+            text += f"\n - <b>{caller.name}</b>: {caller.url}"
+    await client.send_message(sender_id, text, parse_mode="HTML", link_preview=False)
 
 ### First command, get the time and day
 @client.on(events.NewMessage(pattern="/(?i)time"))
@@ -73,12 +77,13 @@ async def _email_check(event):
     main_r = ToolResponse("email")
     
     callers = [
-        # HoleheCaller({"email": email}, {"client": client, "sender_id": event.sender_id}, BotType.telethon),
-        # GHuntCaller({"email": email}, {"client": client, "sender_id": event.sender_id}, BotType.telethon),
+        HoleheCaller({"email": email}, {"client": client, "sender_id": event.sender_id}, BotType.telethon),
+        GHuntCaller({"email": email}, {"client": client, "sender_id": event.sender_id}, BotType.telethon),
         AlephCaller({"email": email}, {"client": client, "sender_id": event.sender_id}, BotType.telethon),
     ]
 
-    start_message = await client.send_message(sender_id, "loading...", parse_mode="HTML")
+    loading_message = f"calling {len(callers)} tools: " + ", ".join([caller.__class__.name for caller in callers]) + "..."
+    start_message = await client.send_message(sender_id, loading_message, parse_mode="HTML")
     await asyncio.gather(*[caller.call() for caller in callers])
     await client.send_message(sender_id, f"Done in {main_r.get_total_time_seconds()}s.", parse_mode="HTML")
     await client.delete_messages(sender_id, [start_message.id])
@@ -105,7 +110,7 @@ async def _email_check(event):
 #     await client.send_message(sender_id, f"Done in {main_r.get_total_time_seconds()}s.", parse_mode="HTML")
 #     await client.delete_messages(sender_id, [start_message.id])
 
-    
+
 # from maigret import 
 import subprocess
 username_pattern = r"^/user (.+)$"
@@ -118,6 +123,44 @@ async def _username_check(event):
         command, shell=True, stderr=subprocess.STDOUT, text=True
     )
     print(cli_output)
+
+    
+# Face comparison
+import subprocess
+from deepface import DeepFace
+username_pattern = r"^/user (.+)$"
+@client.on(events.NewMessage())
+async def _face_comparison_check(event):
+    if event.photo and event.grouped_id:
+        print(f"got photo and {event.grouped_id=}")
+        group_folder = os.path.join(TMP_DIR, f"photos_{event.grouped_id}")
+        try:
+            image_paths = os.listdir(group_folder)
+            count_images = len(image_paths)
+            if count_images > 1: 
+                print("only 2 images supported")
+                return
+        except Exception as e: 
+            print(e)
+            count_images = 0
+
+        saved_path = await event.download_media(os.path.join(group_folder, f"{count_images}.jpg"))
+        
+        print(saved_path)
+        if count_images == 1:
+            img1_path = os.path.abspath(os.path.join(group_folder, image_paths[0]))
+            img2_path =os.path.abspath(saved_path)
+            print(f"FACE COMPARISON {img1_path=} AND {img2_path=}")
+            result = DeepFace.verify(
+                img1_path = img1_path, img2_path = img2_path,
+                model_name = 'VGG-Face',
+                detector_backend="retinaface"
+            )
+            print(result)
+            await client.send_message(event.sender_id, f"Face comparison result: {result}")
+
+
+    else: print("no photo in group")
 
 
 ### MAIN

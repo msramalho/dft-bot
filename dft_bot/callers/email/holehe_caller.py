@@ -6,10 +6,12 @@ from holehe.core import (
     TrioProgress,
     launch_module,
 )
-from dft_bot.callers.caller import Caller
+from dft_bot.callers.caller import BotType, Caller
 from dft_bot.utils import ToolResponse
 
 class HoleheCaller(Caller):
+    name = "Holehe"
+    url = "https://github.com/megadose/holehe"
 
     async def call(self) -> ToolResponse:
         print("START HOLEHE CALL")

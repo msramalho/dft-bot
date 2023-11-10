@@ -13,6 +13,7 @@ class Caller:
         self.bot_data = bot_data
         self.bot_type = bot_type
         self.result: ToolResponse = None
+        self.name = ""
 
     async def call(self) -> ToolResponse:
         # Call the number

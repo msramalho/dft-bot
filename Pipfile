@@ -12,6 +12,7 @@ python-slugify = "*"
 pyotp = "*"
 maigret = "*"
 sqlalchemy = "*"
+deepface = "*"
 
 [dev-packages]
 jurigged = "*"
