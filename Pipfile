@@ -1,0 +1,21 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+telethon = "*"
+python-dotenv = "*"
+holehe = "*"
+ghunt = ">=2.0.3"
+python-slugify = "*"
+pyotp = "*"
+maigret = "*"
+sqlalchemy = "*"
+
+[dev-packages]
+jurigged = "*"
+black = "*"
+
+[requires]
+python_version = "3.10"
