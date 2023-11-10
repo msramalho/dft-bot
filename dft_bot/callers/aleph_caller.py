@@ -1,6 +1,4 @@
-from typing import *
-import requests, os
-# from urllib.parse import urlparse
+import os
 
 import aiohttp
 

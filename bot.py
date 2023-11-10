@@ -127,10 +127,14 @@ async def _username_check(event):
     
 # Face comparison
 import subprocess
-from deepface import DeepFace
+from dft_bot.callers.face.deepface_caller import DeepfaceCaller
 username_pattern = r"^/user (.+)$"
 @client.on(events.NewMessage())
 async def _face_comparison_check(event):
+    sender = await event.get_sender()
+    sender_id = sender.id
+    main_r = ToolResponse("face comparison")
+
     if event.photo and event.grouped_id:
         print(f"got photo and {event.grouped_id=}")
         group_folder = os.path.join(TMP_DIR, f"photos_{event.grouped_id}")
@@ -151,13 +155,18 @@ async def _face_comparison_check(event):
             img1_path = os.path.abspath(os.path.join(group_folder, image_paths[0]))
             img2_path =os.path.abspath(saved_path)
             print(f"FACE COMPARISON {img1_path=} AND {img2_path=}")
-            result = DeepFace.verify(
-                img1_path = img1_path, img2_path = img2_path,
-                model_name = 'VGG-Face',
-                detector_backend="retinaface"
-            )
-            print(result)
-            await client.send_message(event.sender_id, f"Face comparison result: {result}")
+
+            callers = [
+                DeepfaceCaller({"img1_path": img1_path, "img2_path": img2_path}, {"client": client, "sender_id": event.sender_id}, BotType.telethon),
+            ]
+
+            # todo: extract this logic and reuse
+            loading_message = f"calling {len(callers)} tools: " + ", ".join([caller.__class__.name for caller in callers]) + "..."
+            start_message = await client.send_message(sender_id, loading_message, parse_mode="HTML")
+            await asyncio.gather(*[caller.call() for caller in callers])
+            await client.send_message(sender_id, f"Done in {main_r.get_total_time_seconds()}s.", parse_mode="HTML")
+            await client.delete_messages(sender_id, [start_message.id])
+
 
 
     else: print("no photo in group")
