@@ -5,6 +5,7 @@ callers/url/
 docker-compose.yml
 Dockerfile
 pyproject.toml
+tmp/
 
 ### python general ignores
 # build artifacts
