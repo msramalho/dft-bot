@@ -1,5 +1,6 @@
 .env
 secrets/
+reports/
 dft.db
 callers/url/
 docker-compose.yml

@@ -12,7 +12,7 @@ class AlephCaller(Caller):
     def __init__(self, input: dict, bot_data: dict, bot_type: BotType):
         super().__init__(input, bot_data, bot_type)
         self.api_key = os.environ.get("ALEPH_SECRET_API_KEY")
-        assert self.api_key and len(self.api_key), f"invalid env variable for Aleph API key: ALEPH_SECRET_API_KEY={self.api_key}"
+        assert self.api_key and len(self.api_key), "invalid env variable for Aleph API key set ALEPH_SECRET_API_KEY=YOUR_KEY"
         
     
     async def call(self) -> ToolResponse:

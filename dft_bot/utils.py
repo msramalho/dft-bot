@@ -25,12 +25,13 @@ class ToolResponse:
         await self.send_telegram_split_if_needed(client, sender_id, 1)
 
         if self.filename:
+            _, file_extension = os.path.splitext(self.filename)
             await client.send_file(
                 sender_id,
                 self.filename,
                 attributes=[
                     DocumentAttributeFilename(
-                        file_name=f"{slugify(self.tool + '-' + self.input)}.txt"
+                        file_name=f"{slugify(self.tool + '-' + self.input)}{file_extension or '.txt'}"
                     )
                 ],
             )

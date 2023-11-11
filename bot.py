@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 import datetime
 from dft_bot.callers.caller import BotType
+from dft_bot.callers.email.hibp_caller import HIBPCaller
 from dft_bot.constants import TMP_DIR
 from dft_bot.db.crud import init_db, insert_active_user, is_user_active
 from dft_bot.db.models import UserTypeEnum
@@ -27,7 +28,9 @@ async def start(event):
     sender_id = sender.id
     text = "Welcome to the digital footprint tracking bot 🤖!\n"
     type_callers = {
-        "email": [HoleheCaller, GHuntCaller, AlephCaller],
+        "email": [HoleheCaller, GHuntCaller, AlephCaller, HIBPCaller],
+        "face-comparison": [DeepfaceCaller],
+        # "username": [MaigretCaller], #TODO
     }
     for c in type_callers:
         text += f"\n<b>{c}</b> tools:"
@@ -63,6 +66,7 @@ async def _login(event):
 from dft_bot.callers.email.holehe_caller import HoleheCaller
 from dft_bot.callers.email.ghunt_caller import GHuntCaller
 from dft_bot.callers.aleph_caller import AlephCaller
+from dft_bot.callers.email.hibp_caller import HIBPCaller
 from dft_bot.utils import ToolResponse
 
 email_pattern = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b"
@@ -80,6 +84,7 @@ async def _email_check(event):
         HoleheCaller({"email": email}, {"client": client, "sender_id": event.sender_id}, BotType.telethon),
         GHuntCaller({"email": email}, {"client": client, "sender_id": event.sender_id}, BotType.telethon),
         AlephCaller({"email": email}, {"client": client, "sender_id": event.sender_id}, BotType.telethon),
+        HIBPCaller({"email": email}, {"client": client, "sender_id": event.sender_id}, BotType.telethon),
     ]
 
     loading_message = f"calling {len(callers)} tools: " + ", ".join([caller.__class__.name for caller in callers]) + "..."
@@ -127,6 +132,7 @@ async def _username_check(event):
     
 # Face comparison
 import subprocess
+from pathlib import Path
 from dft_bot.callers.face.deepface_caller import DeepfaceCaller
 username_pattern = r"^/user (.+)$"
 @client.on(events.NewMessage())
@@ -143,6 +149,7 @@ async def _face_comparison_check(event):
             count_images = len(image_paths)
             if count_images > 1: 
                 print("only 2 images supported")
+                Path.unlink(Path(group_folder), missing_ok=True)
                 return
         except Exception as e: 
             print(e)
@@ -158,6 +165,7 @@ async def _face_comparison_check(event):
 
             callers = [
                 DeepfaceCaller({"img1_path": img1_path, "img2_path": img2_path}, {"client": client, "sender_id": event.sender_id}, BotType.telethon),
+                #TODO: add https://docs.aws.amazon.com/rekognition/latest/APIReference/API_CompareFaces.html
             ]
 
             # todo: extract this logic and reuse
@@ -166,6 +174,8 @@ async def _face_comparison_check(event):
             await asyncio.gather(*[caller.call() for caller in callers])
             await client.send_message(sender_id, f"Done in {main_r.get_total_time_seconds()}s.", parse_mode="HTML")
             await client.delete_messages(sender_id, [start_message.id])
+
+            Path.unlink(Path(group_folder), missing_ok=True)
 
 
 
