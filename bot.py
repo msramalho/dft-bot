@@ -1,7 +1,7 @@
 import asyncio
 import os
+import shutil
 from telethon import TelegramClient, events
-from telethon.tl.custom import Button
 from dotenv import load_dotenv
 
 import datetime
@@ -132,8 +132,9 @@ async def _username_check(event):
     
 # Face comparison
 import subprocess
-from pathlib import Path
 from dft_bot.callers.face.deepface_caller import DeepfaceCaller
+from dft_bot.callers.face.aws_rekognition_caller import AwsRekognitionCaller
+
 username_pattern = r"^/user (.+)$"
 @client.on(events.NewMessage())
 async def _face_comparison_check(event):
@@ -149,7 +150,7 @@ async def _face_comparison_check(event):
             count_images = len(image_paths)
             if count_images > 1: 
                 print("only 2 images supported")
-                Path.unlink(Path(group_folder), missing_ok=True)
+                shutil.rmtree(group_folder, ignore_errors=True)
                 return
         except Exception as e: 
             print(e)
@@ -165,7 +166,7 @@ async def _face_comparison_check(event):
 
             callers = [
                 DeepfaceCaller({"img1_path": img1_path, "img2_path": img2_path}, {"client": client, "sender_id": event.sender_id}, BotType.telethon),
-                #TODO: add https://docs.aws.amazon.com/rekognition/latest/APIReference/API_CompareFaces.html
+                AwsRekognitionCaller({"img1_path": img1_path, "img2_path": img2_path}, {"client": client, "sender_id": event.sender_id}, BotType.telethon),
             ]
 
             # todo: extract this logic and reuse
@@ -175,7 +176,7 @@ async def _face_comparison_check(event):
             await client.send_message(sender_id, f"Done in {main_r.get_total_time_seconds()}s.", parse_mode="HTML")
             await client.delete_messages(sender_id, [start_message.id])
 
-            Path.unlink(Path(group_folder), missing_ok=True)
+            shutil.rmtree(group_folder, ignore_errors=True)
 
 
 

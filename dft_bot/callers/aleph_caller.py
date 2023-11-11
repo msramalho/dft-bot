@@ -20,7 +20,6 @@ class AlephCaller(Caller):
 
         if email := self.input.get("email"): await self.call_api("email", email)
         # TODO: other entities, eg phone number, domain
-
         if self.result:
             await self.send_result()
         print("DONE ALEPH CALL")
@@ -41,7 +40,9 @@ class AlephCaller(Caller):
                     print(f"Error: ALEPH returned {r.status}")
                     return
                 res_d = await r.json()
+                print(res_d.get("total"))
 
                 if res_d.get("total") > 0:
                     self.result.text = f"There are (at least) {res_d.get('total')} entities on ALEPH!\n\nExplore them at: https://aleph.occrp.org/search?q={query_term}"
+                else: self.result.text = "No results found on Aleph."
     

@@ -13,6 +13,7 @@ pyotp = "*"
 maigret = "*"
 sqlalchemy = "*"
 deepface = "*"
+boto3 = "*"
 
 [dev-packages]
 jurigged = "*"
