@@ -48,6 +48,8 @@ tools:
 ```bash
 # install dependencies with pipenv
 pipenv install
+# if you're developing also install dev dependencies
+pipenv install -d
 
 # run it
 python bot.py
