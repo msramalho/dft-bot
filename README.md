@@ -1,4 +1,5 @@
 # [WIP] Digital Footprint Tracking Bot
+#### Making command line tools, APIs, and other services more **accessible** and **smoother**.
 
 ## Bots working
 - [x] Telegram
