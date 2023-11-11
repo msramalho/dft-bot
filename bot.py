@@ -1,12 +1,8 @@
-import asyncio
-import os
-import shutil
+import asyncio, os, re, shutil, datetime
 from telethon import TelegramClient, events
 from dotenv import load_dotenv
 
-import datetime
 from dft_bot.callers.caller import BotType
-from dft_bot.callers.email.hibp_caller import HIBPCaller
 from dft_bot.constants import TMP_DIR
 from dft_bot.db.crud import init_db, insert_active_user, is_user_active
 from dft_bot.db.models import UserTypeEnum
@@ -29,8 +25,8 @@ async def start(event):
     text = "Welcome to the digital footprint tracking bot 🤖!\n"
     type_callers = {
         "email": [HoleheCaller, GHuntCaller, AlephCaller, HIBPCaller],
-        "face-comparison": [DeepfaceCaller],
-        # "username": [MaigretCaller], #TODO
+        "face-comparison": [DeepfaceCaller, AwsRekognitionCaller],
+        "username": [MaigretCaller],
     }
     for c in type_callers:
         text += f"\n<b>{c}</b> tools:"
@@ -47,7 +43,6 @@ async def time(event):
     text = "Received! Day and time: " + str(datetime.datetime.now())
     await client.send_message(sender_id, text, parse_mode="HTML")
 
-import re
 login_pattern = r"^/login (.+?)( (\d{6})|)$"
 @client.on(events.NewMessage(pattern=login_pattern))
 async def _login(event):
@@ -74,9 +69,9 @@ email_pattern = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b"
 async def _email_check(event):
     sender = await event.get_sender()
     sender_id = sender.id
-    if not is_user_active(sender_id, UserTypeEnum.telegram):
-        await client.send_message(sender_id, "Please /login first.", parse_mode="HTML")
-        return
+    # if not is_user_active(sender_id, UserTypeEnum.telegram):
+    #     await client.send_message(sender_id, "Please /login first.", parse_mode="HTML")
+    #     return
     email = event.raw_text
     main_r = ToolResponse("email")
     
@@ -87,11 +82,7 @@ async def _email_check(event):
         HIBPCaller({"email": email}, {"client": client, "sender_id": event.sender_id}, BotType.telethon),
     ]
 
-    loading_message = f"calling {len(callers)} tools: " + ", ".join([caller.__class__.name for caller in callers]) + "..."
-    start_message = await client.send_message(sender_id, loading_message, parse_mode="HTML")
-    await asyncio.gather(*[caller.call() for caller in callers])
-    await client.send_message(sender_id, f"Done in {main_r.get_total_time_seconds()}s.", parse_mode="HTML")
-    await client.delete_messages(sender_id, [start_message.id])
+    await load_call_notify(callers, client, sender_id, main_r)
 
 ### URL PATTERN
 # from dft_bot.callers.url.unfurl_caller import UnfurlCaller
@@ -116,26 +107,27 @@ async def _email_check(event):
 #     await client.delete_messages(sender_id, [start_message.id])
 
 
-# from maigret import 
-import subprocess
+from dft_bot.callers.username.maigret_caller import MaigretCaller
+
 username_pattern = r"^/user (.+)$"
 @client.on(events.NewMessage(pattern=username_pattern))
 async def _username_check(event):
-    print("USERNAME")
+    sender = await event.get_sender()
+    sender_id = sender.id
     username = re.search(username_pattern, event.raw_text).group(1)
-    command = f"maigret {username} --html --pdf --csv"
-    cli_output = subprocess.check_output(
-        command, shell=True, stderr=subprocess.STDOUT, text=True
-    )
-    print(cli_output)
+    main_r = ToolResponse("username")
+    
+    callers = [
+        MaigretCaller({"username": username}, {"client": client, "sender_id": event.sender_id}, BotType.telethon),
+    ]
+
+    await load_call_notify(callers, client, sender_id, main_r)
 
     
 # Face comparison
-import subprocess
 from dft_bot.callers.face.deepface_caller import DeepfaceCaller
 from dft_bot.callers.face.aws_rekognition_caller import AwsRekognitionCaller
 
-username_pattern = r"^/user (.+)$"
 @client.on(events.NewMessage())
 async def _face_comparison_check(event):
     sender = await event.get_sender()
@@ -143,7 +135,6 @@ async def _face_comparison_check(event):
     main_r = ToolResponse("face comparison")
 
     if event.photo and event.grouped_id:
-        print(f"got photo and {event.grouped_id=}")
         group_folder = os.path.join(TMP_DIR, f"photos_{event.grouped_id}")
         try:
             image_paths = os.listdir(group_folder)
@@ -158,7 +149,6 @@ async def _face_comparison_check(event):
 
         saved_path = await event.download_media(os.path.join(group_folder, f"{count_images}.jpg"))
         
-        print(saved_path)
         if count_images == 1:
             img1_path = os.path.abspath(os.path.join(group_folder, image_paths[0]))
             img2_path =os.path.abspath(saved_path)
@@ -169,23 +159,22 @@ async def _face_comparison_check(event):
                 AwsRekognitionCaller({"img1_path": img1_path, "img2_path": img2_path}, {"client": client, "sender_id": event.sender_id}, BotType.telethon),
             ]
 
-            # todo: extract this logic and reuse
-            loading_message = f"calling {len(callers)} tools: " + ", ".join([caller.__class__.name for caller in callers]) + "..."
-            start_message = await client.send_message(sender_id, loading_message, parse_mode="HTML")
-            await asyncio.gather(*[caller.call() for caller in callers])
-            await client.send_message(sender_id, f"Done in {main_r.get_total_time_seconds()}s.", parse_mode="HTML")
-            await client.delete_messages(sender_id, [start_message.id])
+            await load_call_notify(callers, client, sender_id, main_r)
 
             shutil.rmtree(group_folder, ignore_errors=True)
 
 
+async def load_call_notify(callers, client: TelegramClient, sender_id: str, response_timer:ToolResponse):
+    loading_message = f"calling {len(callers)} tools: " + ", ".join([caller.__class__.name for caller in callers]) + "..."
+    start_message = await client.send_message(sender_id, loading_message, parse_mode="HTML")
+    await asyncio.gather(*[caller.call() for caller in callers])
+    await client.send_message(sender_id, f"Done in {response_timer.get_total_time_seconds()}s.", parse_mode="HTML")
+    await client.delete_messages(sender_id, [start_message.id])
 
-    else: print("no photo in group")
 
 
 ### MAIN
 if __name__ == "__main__":
     init_db()
-    print("DB Init!")
+    print("DB initialized, bot ready!")
     client.run_until_disconnected()
-    print("Bot Started!")

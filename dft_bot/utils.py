@@ -38,10 +38,13 @@ class ToolResponse:
             # delete file
             pathlib.Path(self.filename).unlink(missing_ok=True)
 
+    def get_filename(self, extension:str="html"):
+        return os.path.join(TMP_DIR, f"{slugify(self.tool + '-' + self.input)}-{generate_uuid()[0:8]}.{extension}")
+
     def write_text_to_file(self, extension:str="html", text:str=None):
         # writes either self.text or provided text to a file
         text_to_write = text or self.text
-        self.filename = os.path.join(TMP_DIR, f"{slugify(self.tool + '-' + self.input)}-{generate_uuid()[0:8]}.{extension}")
+        self.filename = self.get_filename(extension)
         with open(self.filename, "w") as f:
             f.write(text_to_write)
     
