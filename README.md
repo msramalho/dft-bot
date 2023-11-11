@@ -1,4 +1,4 @@
-Digital Footprint Tracking Bot
+# [WIP] Digital Footprint Tracking Bot
 
 ## Bots working
 - [x] Telegram
@@ -13,13 +13,13 @@ Digital Footprint Tracking Bot
 - **email** eg `brittany.kaiser@cambridgeanalytica.org`
   - [x] holehe
   - [x] Ghunt
-  - [x] HaveIBeenPwned
+  - [x] HaveIBeenPwned (requires API setup)
   - [x] Aleph API
 - **username** eg `/user trump`
   - [x] maigret
 - **face comparison** upload 2 photos
   - [x] deepface
-  - [x] AwsRekognition
+  - [x] AwsRekognition (requires API setup)
 - **video** `/video https://www.youtube.com/watch?v=QNXvE1BZu8g`
   - [x] yt-dlp
 - **default**
