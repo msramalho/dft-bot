@@ -1,5 +1,5 @@
 import os
-
+import urllib.parse
 import aiohttp
 
 from dft_bot.callers.caller import BotType, Caller
@@ -19,7 +19,8 @@ class AlephCaller(Caller):
         print("START ALEPH CALL")
 
         if email := self.input.get("email"): await self.call_api("email", email)
-        # TODO: other entities, eg phone number, domain
+        if misc := self.input.get("misc"): await self.call_api("misc", misc)
+        
         if self.result:
             await self.send_result()
         print("DONE ALEPH CALL")
@@ -43,6 +44,6 @@ class AlephCaller(Caller):
                 print(res_d.get("total"))
 
                 if res_d.get("total") > 0:
-                    self.result.text = f"There are (at least) {res_d.get('total')} entities on ALEPH!\n\nExplore them at: https://aleph.occrp.org/search?q={query_term}"
+                    self.result.text = f"There are (at least) {res_d.get('total')} entities on ALEPH!\n\nExplore them at:  https://aleph.occrp.org/search?q={urllib.parse.quote_plus(query_term)}"
                 else: self.result.text = "No results found on Aleph."
     

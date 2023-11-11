@@ -24,7 +24,7 @@ class HIBPCaller(Caller):
         print("DONE HIBP CALL")
 
     async def call_api(self, email:str) -> ToolResponse:
-        self.result: ToolResponse = ToolResponse(f"HIBP", input=email)
+        self.result: ToolResponse = ToolResponse(f"HaveIBeenPwned", input=email)
         async with aiohttp.ClientSession() as session:
             async with session.get(f"https://haveibeenpwned.com/api/v3/breachedaccount/{email}?truncateResponse=false", headers={
                 "hibp-api-key": f"{self.api_key}",     

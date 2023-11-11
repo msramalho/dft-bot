@@ -1,7 +1,6 @@
-import os
 from deepface import DeepFace
 
-from dft_bot.callers.caller import BotType, Caller
+from dft_bot.callers.caller import Caller
 from dft_bot.utils import ToolResponse
 
 class DeepfaceCaller(Caller):

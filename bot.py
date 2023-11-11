@@ -29,7 +29,7 @@ async def start(event):
         "username": [MaigretCaller],
     }
     for c in type_callers:
-        text += f"\n<b>{c}</b> tools:"
+        text += f"\n\n<b>{c}</b> tools:"
         for caller in type_callers[c]:
             text += f"\n - <b>{caller.name}</b>: {caller.url}"
     await client.send_message(sender_id, text, parse_mode="HTML", link_preview=False)
@@ -163,6 +163,35 @@ async def _face_comparison_check(event):
 
             shutil.rmtree(group_folder, ignore_errors=True)
 
+from dft_bot.callers.video.ytdlp_caller import YtDlpCaller
+video_pattern = r"^/video (.+)$"
+@client.on(events.NewMessage(pattern=video_pattern))
+async def _video_ops(event):
+    sender = await event.get_sender()
+    sender_id = sender.id
+    url = re.search(video_pattern, event.raw_text).group(1)
+    main_r = ToolResponse("url")
+    
+    callers = [
+        YtDlpCaller({"url": url}, {"client": client, "sender_id": event.sender_id}, BotType.telethon),
+    ]
+
+    await load_call_notify(callers, client, sender_id, main_r)
+
+@client.on(events.NewMessage())
+async def _default_ops(event):
+    sender = await event.get_sender()
+    sender_id = sender.id
+    if len(text := event.raw_text) == 0: return
+    main_r = ToolResponse("url")
+
+    callers = [
+        AlephCaller({"misc": text}, {"client": client, "sender_id": event.sender_id}, BotType.telethon),
+    ]
+
+    await load_call_notify(callers, client, sender_id, main_r)
+
+    
 
 async def load_call_notify(callers, client: TelegramClient, sender_id: str, response_timer:ToolResponse):
     loading_message = f"calling {len(callers)} tools: " + ", ".join([caller.__class__.name for caller in callers]) + "..."

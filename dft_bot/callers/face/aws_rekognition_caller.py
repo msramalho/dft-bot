@@ -53,5 +53,5 @@ class AwsRekognitionCaller(Caller):
         if result['Similarity'] >= similarity_threshold:
             self.result.text = f"The two faces belong to the same person!"
         else:
-            self.result.text = f"The two faces do not belong to the same person."
+            self.result.text = f"The two faces DO NOT belong to the same person."
         self.result.text += f"\n\n - similarity: {result['Similarity']:.3f}%\n - threshold: {similarity_threshold}%"

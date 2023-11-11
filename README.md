@@ -20,11 +20,10 @@ Digital Footprint Tracking Bot
 - **face comparison** upload 2 photos
   - [x] deepface
   - [x] AwsRekognition
-- **video** `/video https://www.youtube.com/watch?v=dQw4w9WgXcQ`
-  - [ ] yt-dlp
-<!-- TODO -->
+- **video** `/video https://www.youtube.com/watch?v=QNXvE1BZu8g`
+  - [x] yt-dlp
 - **default**
-  - [ ] Aleph API
+  - [x] Aleph API
 
 ## Things to implement
 
