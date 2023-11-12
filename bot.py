@@ -22,11 +22,14 @@ client = TelegramClient("./secrets/anon", API_ID, API_HASH).start(bot_token=BOT_
 async def start(event):
     sender = await event.get_sender()
     sender_id = sender.id
-    text = "Welcome to the digital footprint tracking bot 🤖!\n"
+    text = "Welcome to the digital footprint tracking bot 🤖!\n\n"
+
     type_callers = {
         "email": [HoleheCaller, GHuntCaller, AlephCaller, HIBPCaller],
         "face-comparison": [DeepfaceCaller, AwsRekognitionCaller],
         "username": [MaigretCaller],
+        "video": [YtDlpCaller],
+        "default": [AlephCaller],
     }
     for c in type_callers:
         text += f"\n\n<b>{c}</b> tools:"
@@ -163,6 +166,7 @@ async def _face_comparison_check(event):
 
             shutil.rmtree(group_folder, ignore_errors=True)
 
+from dft_bot.callers.video.whisper_caller import WhisperCaller
 from dft_bot.callers.video.ytdlp_caller import YtDlpCaller
 video_pattern = r"^/video (.+)$"
 @client.on(events.NewMessage(pattern=video_pattern))
@@ -172,24 +176,27 @@ async def _video_ops(event):
     url = re.search(video_pattern, event.raw_text).group(1)
     main_r = ToolResponse("url")
     
-    callers = [
-        YtDlpCaller({"url": url}, {"client": client, "sender_id": event.sender_id}, BotType.telethon),
-    ]
+    caller = YtDlpCaller({"url": url}, {"client": client, "sender_id": event.sender_id}, BotType.telethon)
+    await load_call_notify([caller], client, sender_id, main_r)
 
-    await load_call_notify(callers, client, sender_id, main_r)
+    # caller.result.delete_file()
 
-@client.on(events.NewMessage())
-async def _default_ops(event):
-    sender = await event.get_sender()
-    sender_id = sender.id
-    if len(text := event.raw_text) == 0: return
-    main_r = ToolResponse("url")
+    # caller2 =WhisperCaller({"video": caller.result.filename}, {"client": client, "sender_id": event.sender_id}, BotType.telethon)
+    # await load_call_notify([caller2], client, sender_id, main_r)
 
-    callers = [
-        AlephCaller({"misc": text}, {"client": client, "sender_id": event.sender_id}, BotType.telethon),
-    ]
 
-    await load_call_notify(callers, client, sender_id, main_r)
+# @client.on(events.NewMessage())
+# async def _default_ops(event):
+#     sender = await event.get_sender()
+#     sender_id = sender.id
+#     if len(text := event.raw_text) == 0: return
+#     main_r = ToolResponse("url")
+
+#     callers = [
+#         AlephCaller({"misc": text}, {"client": client, "sender_id": event.sender_id}, BotType.telethon),
+#     ]
+
+#     await load_call_notify(callers, client, sender_id, main_r)
 
     
 

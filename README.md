@@ -1,5 +1,6 @@
 # [WIP] Digital Footprint Tracking Bot
-#### Making command line tools, APIs, and other services more **accessible** and **smoother**.
+#### Making command line tools, APIs, and other services more **accessible**.
+This project is a WIP and is intended to bring features that can be accessed via useful CLIs, APIs, ...
 
 ## Bots working
 - [x] Telegram
@@ -23,16 +24,19 @@
   - [x] AwsRekognition (requires API setup)
 - **video** `/video https://www.youtube.com/watch?v=QNXvE1BZu8g`
   - [x] yt-dlp
-- **default**
-  - [x] Aleph API
+<!-- - **default**
+  - [x] Aleph API -->
 
 ## Things to implement
 
 features:
+- test setup for each tool
+- document .env
+- enable/disable tools from config file
 - dockerize
 - scalability
-- authentication with token and TOTP
-- authentication to enable more features
+- observability
+- authentication
 
 tools:
 - unfurl
@@ -41,6 +45,7 @@ tools:
 - connect to other bots
 - email2phone?
 - blackbird?
+- ... please suggest as issues...
 
 
 ### Development

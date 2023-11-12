@@ -15,6 +15,7 @@ sqlalchemy = "*"
 deepface = "*"
 boto3 = "*"
 yt-dlp = "*"
+openai-whisper = "*"
 
 [dev-packages]
 jurigged = "*"

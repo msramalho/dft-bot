@@ -1,6 +1,5 @@
 
 import os
-from pathlib import Path
 import shutil
 import yt_dlp
 from dft_bot.callers.caller import Caller

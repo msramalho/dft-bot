@@ -17,6 +17,7 @@ class ToolResponse:
     text: str = ""
     input: str = ""  # user input field, eg: email, phone, ...
     filename: str = None
+    delete_local: bool = True
     # error: str = None
     start_time: float = field(default_factory=time.time)
 
@@ -36,7 +37,11 @@ class ToolResponse:
                 ],
             )
             # delete file
-            pathlib.Path(self.filename).unlink(missing_ok=True)
+            if self.delete_local: self.delete_file()
+
+    def delete_file(self):
+        pathlib.Path(self.filename).unlink(missing_ok=True)
+
 
     def get_filename(self, extension:str="html"):
         return os.path.join(TMP_DIR, f"{slugify(self.tool + '-' + self.input)}-{generate_uuid()[0:8]}.{extension}")
